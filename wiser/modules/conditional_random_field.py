@@ -1,6 +1,7 @@
 import torch
 from allennlp.modules.conditional_random_field import ConditionalRandomField
 
+
 class WiserConditionalRandomField(ConditionalRandomField):
     def expected_log_likelihood(
             self,
@@ -68,7 +69,8 @@ class WiserConditionalRandomField(ConditionalRandomField):
             temp = temp * unary_marginals[0]                         # (batch_size, num_tags)
             score = temp.sum(dim=1)                                  # (batch_size,)
         else:
-            score = torch.zeros((batch_size,), device=logits.device.type) # (batch_size,)
+            score = torch.zeros(
+                (batch_size,), device=logits.device.type)            # (batch_size,)
 
 
         # Add up the scores for the expected transitions and all
@@ -107,3 +109,75 @@ class WiserConditionalRandomField(ConditionalRandomField):
 
         # Finally we subtract partition function and return sum
         return torch.sum(score - partition)
+
+    def marginal_log_likelihood(
+            self,
+            inputs: torch.Tensor,
+            tags: torch.Tensor,
+            mask: torch.ByteTensor = None,
+            marginal_mask: torch.ByteTensor = None) -> torch.Tensor:
+        """
+        Computes the marginal log likelihood.
+        """
+        if mask is None:
+            mask = torch.ones(*tags.size(), dtype=torch.long)
+        if marginal_mask is None:
+            marginal_mask = torch.ones(*tags.size(), dtype=torch.long)
+
+        log_denominator = self._input_likelihood(inputs, mask)
+        log_numerator = self._sum_joint_score(inputs, tags, mask, marginal_mask)
+
+        return torch.sum(log_numerator - log_denominator)
+
+    def _sum_joint_score(self,
+                         logits: torch.Tensor,
+                         tags: torch.Tensor,
+                         mask: torch.ByteTensor,
+                         marginal_mask: torch.ByteTensor) -> torch.Tensor:
+        """
+        Computes the sum of scores of the CRF.
+        """
+        batch_size, seq_len, num_tags = logits.data.shape
+
+        scores = torch.zeros((batch_size,))
+        # Computes each marginal joint score
+        for i in range(batch_size):
+            # Handles start transition
+            if marginal_mask[i, 0] == 1:
+                current = torch.zeros((num_tags,))
+                if self.include_start_end_transitions:
+                    scores[i] = self.start_transitions[tags[i, 0]]
+            else:
+                if self.include_start_end_transitions:
+                    current = self.start_transitions.clone()
+                else:
+                    current = torch.zeros((num_tags,))
+
+            # Iterates over each element in the sequence
+            for j in range(seq_len):
+                # Adds the score if element is not marginalized out
+                if marginal_mask[i, j] == 1 and mask[i, j] == 1:
+                    scores[i] += current[tags[i, j]] + logits[i, j, tags[i, j]]
+                    current = self.transitions[tags[i, j]]
+
+                # Marginalizes the element out if needed
+                elif mask[i, j] == 1:
+                    current = (current + logits[i, j]).unsqueeze(1).repeat(1, num_tags)
+                    current += self.transitions
+                    current = current.logsumexp(dim=0)
+
+            # Wraps up the last element
+
+            # Just adds end transition if we did not
+            # marginalize last element (if needed)
+            last_token = mask[i].sum() - 1
+            if marginal_mask[i, last_token] == 1 and self.include_start_end_transitions:
+                scores[i] += self.end_transitions[tags[i, last_token]]
+
+            # Finishes marginalization if needed
+            elif marginal_mask[i, last_token] == 0:
+                if self.include_start_end_transitions:
+                    current += self.end_transitions
+                scores[i] += current.logsumexp()
+
+        return scores

@@ -67,6 +67,73 @@ class TestWiserConditionalRandomField(unittest.TestCase):
         self.assertLess(torch.norm(crf1.start_transitions - crf2.start_transitions), 1e-3)
         self.assertLess(torch.norm(crf1.end_transitions - crf2.end_transitions), 1e-3)
 
+    def test_marginal_learning_matches(self):
+        num_labels = 3
+        num_examples = 100
+        min_seq_len = 8
+        max_seq_len = 12
+        logits = torch.Tensor([-0.5, -.25, 0])
+        transitions = torch.eye(3)
+        start = torch.Tensor([0.25, 0, 0.25])
+        start -= torch.max(start)
+        end = start
+
+        tags, mask = _generate_data(
+            num_examples, min_seq_len, max_seq_len, logits, transitions,
+            start, end)
+
+        # Trains first CRF on tags
+        crf1 = LinearCrf(num_labels)
+        # Initializes all weights to zero so we can compare with other CRF
+        torch.nn.init.zeros_(crf1.linear)
+        torch.nn.init.zeros_(crf1.transitions)
+        torch.nn.init.zeros_(crf1.start_transitions)
+        torch.nn.init.zeros_(crf1.end_transitions)
+        _train_crf_tags(crf1, tags, mask, 50, 32)
+
+        # Trains second CRF with marginal mask
+        crf2 = LinearCrf(num_labels)
+        torch.nn.init.zeros_(crf2.linear)
+        torch.nn.init.zeros_(crf2.transitions)
+        torch.nn.init.zeros_(crf2.start_transitions)
+        torch.nn.init.zeros_(crf2.end_transitions)
+        _train_crf_marginal(crf2, tags, mask, mask, 50, 32)
+
+        # Tests that all parameters match
+        self.assertLess(torch.norm(crf1.linear - crf2.linear), 1e-3)
+        self.assertLess(torch.norm(crf1.transitions - crf2.transitions), 1e-3)
+        self.assertLess(torch.norm(crf1.start_transitions - crf2.start_transitions), 1e-3)
+        self.assertLess(torch.norm(crf1.end_transitions - crf2.end_transitions), 1e-3)
+
+    def test_marginal_learning(self):
+        """
+        Only tests that marginalization runs without raising an exception
+        """
+        num_labels = 3
+        num_examples = 100
+        min_seq_len = 8
+        max_seq_len = 12
+        logits = torch.Tensor([-0.5, -.25, 0])
+        transitions = torch.eye(3)
+        start = torch.Tensor([0.25, 0, 0.25])
+        start -= torch.max(start)
+        end = start
+
+        tags, mask = _generate_data(
+            num_examples, min_seq_len, max_seq_len, logits, transitions,
+            start, end)
+        marginal_mask = mask.clone().detach()
+        marginal_mask[0, 0] = 0
+        marginal_mask[1, 1:] = 0
+
+
+        crf = LinearCrf(num_labels)
+        torch.nn.init.zeros_(crf.linear)
+        torch.nn.init.zeros_(crf.transitions)
+        torch.nn.init.zeros_(crf.start_transitions)
+        torch.nn.init.zeros_(crf.end_transitions)
+        _train_crf_marginal(crf, tags, mask, mask, 10, 32)
+
 
 class LinearCrf(WiserConditionalRandomField):
     """Wraps WiserConditionalRandomField to learn fixed logits for each
@@ -97,6 +164,18 @@ class LinearCrf(WiserConditionalRandomField):
             distribution
         )
 
+    def marginal_log_likelihood(
+            self,
+            tags: torch.Tensor,
+            mask: torch.ByteTensor = None,
+            marginal_mask: torch.ByteTensor = None):
+        return super().marginal_log_likelihood(
+            self.linear.repeat(tags.shape[0], tags.shape[1], 1),
+            tags,
+            mask,
+            marginal_mask
+        )
+
 
 def _train_crf_tags(crf, tags, mask, epochs, batch_size):
     num_batches = math.ceil(tags.shape[0] / batch_size)
@@ -120,6 +199,20 @@ def _train_crf_distribution(crf, distribution, mask, epochs, batch_size):
             batch_mask = mask[i * batch_size:(i + 1) * batch_size]
             crf.zero_grad()
             loss = -crf.expected_log_likelihood(batch_distribution, batch_mask)
+            loss.backward()
+            optimizer.step()
+
+
+def _train_crf_marginal(crf, tags, mask, marginal_mask, epochs, batch_size):
+    num_batches = math.ceil(tags.shape[0] / batch_size)
+    optimizer = optim.Adam(crf.parameters())
+    for _ in range(epochs):
+        for i in range(num_batches):
+            batch_tags = tags[i * batch_size:(i + 1) * batch_size]
+            batch_mask = mask[i * batch_size:(i + 1) * batch_size]
+            batch_marg_mask = marginal_mask[i * batch_size:(i + 1) * batch_size]
+            crf.zero_grad()
+            loss = -crf.marginal_log_likelihood(batch_tags, batch_mask, batch_marg_mask)
             loss.backward()
             optimizer.step()
 
