@@ -22,11 +22,11 @@ SOURCE_OPTION_HTML = u"""
 
 class Viewer(widgets.DOMWidget):
     """Viewer for instances and associated labels."""
-    _view_name           = Unicode('ViewerView').tag(sync=True)
-    _view_module         = Unicode('viewer').tag(sync=True)
+    _view_name = Unicode('ViewerView').tag(sync=True)
+    _view_module = Unicode('viewer').tag(sync=True)
     _view_module_version = Unicode('0.1.0').tag(sync=True)
-    html                 = Unicode('<h3>Error rendering Viewer!</h3>').tag(sync=True)
-    _labels_serialized   = Unicode().tag(sync=True)
+    html = Unicode('<h3>Error rendering Viewer!</h3>').tag(sync=True)
+    _labels_serialized = Unicode().tag(sync=True)
 
     def __init__(self, instances, height=300, additional_labels=None):
         super(Viewer, self).__init__()
@@ -75,7 +75,8 @@ class Viewer(widgets.DOMWidget):
                 first = False
 
         # Renders the label source options
-        source_options = [SOURCE_OPTION_HTML.format(value=0, name="Gold Labels")]
+        source_options = [SOURCE_OPTION_HTML.format(
+            value=0, name="Gold Labels")]
         offset = 1
         for i, name in enumerate(additional_names):
             source_options.append(
@@ -87,12 +88,13 @@ class Viewer(widgets.DOMWidget):
 
         # Render in Viewer template
         self.html = open(os.path.join(directory, 'viewer.html')).read()\
-                    % (self.height, ''.join(pages), ''.join(source_options))
+            % (self.height, ''.join(pages), ''.join(source_options))
         display(Javascript(open(os.path.join(directory, 'viewer.js')).read()))
 
     def _render_instance(self, instance, labels):
         if len(instance['tokens']) != len(labels):
-            raise ValueError("Number of tokens does not match number of labels")
+            raise ValueError(
+                "Number of tokens does not match number of labels")
 
         html = []
         active_span = False

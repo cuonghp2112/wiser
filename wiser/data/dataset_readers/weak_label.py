@@ -15,6 +15,7 @@ class WeakLabelDatasetReader(DatasetReader):
     calling _cdr_read with a second argument that is the name of the entity type
     to include in the data set.
     """
+
     def __init__(self, token_indexers: Dict[str, TokenIndexer] = None, split_sentences: bool = False) -> None:
         super().__init__(lazy=False)
         self.token_indexers = token_indexers
@@ -46,14 +47,18 @@ class WeakLabelDatasetReader(DatasetReader):
 
                 tokens = [token for token in tokens_field]
                 tags = [tag for tag in tags_field]
-                unary_marginals, pairwise_marginals, vote_mask = [None, None, None]
+                unary_marginals, pairwise_marginals, vote_mask = [
+                    None, None, None]
 
                 if unary_marginals_field:
-                    unary_marginals = unary_marginals_field.as_tensor(unary_marginals_field.get_padding_lengths()).numpy()
+                    unary_marginals = unary_marginals_field.as_tensor(
+                        unary_marginals_field.get_padding_lengths()).numpy()
                 if pairwise_marginals_field:
-                    pairwise_marginals = pairwise_marginals_field.as_tensor(pairwise_marginals_field.get_padding_lengths()).numpy()
+                    pairwise_marginals = pairwise_marginals_field.as_tensor(
+                        pairwise_marginals_field.get_padding_lengths()).numpy()
                 if vote_mask_field:
-                    vote_mask = vote_mask_field.as_tensor(vote_mask_field.get_padding_lengths()).numpy()
+                    vote_mask = vote_mask_field.as_tensor(
+                        vote_mask_field.get_padding_lengths()).numpy()
 
                 sentence_delimiters = instance['sentence_spans'].metadata
 
@@ -63,28 +68,34 @@ class WeakLabelDatasetReader(DatasetReader):
                     if len(sentence_tokens) == 0:
                         continue
 
-                    sentence_tokens_field = TextField(sentence_tokens, self.token_indexers)
+                    sentence_tokens_field = TextField(
+                        sentence_tokens, self.token_indexers)
                     fields = {"tokens": sentence_tokens_field}
 
                     if tags is not None:
-                        sentence_tags =tags[delimiter[0]:delimiter[1]]
+                        sentence_tags = tags[delimiter[0]:delimiter[1]]
                         assert len(sentence_tags) == len(sentence_tokens)
-                        fields["tags"] = SequenceLabelField(labels=sentence_tags, sequence_field=sentence_tokens_field)
+                        fields["tags"] = SequenceLabelField(
+                            labels=sentence_tags, sequence_field=sentence_tokens_field)
 
                     if unary_marginals is not None:
                         sentence_unary_marginals = unary_marginals[delimiter[0]:delimiter[1]]
-                        assert len(sentence_unary_marginals) == len(sentence_tokens)
-                        fields['unary_marginals'] = ArrayField(sentence_unary_marginals)
+                        assert len(sentence_unary_marginals) == len(
+                            sentence_tokens)
+                        fields['unary_marginals'] = ArrayField(
+                            sentence_unary_marginals)
 
                     if pairwise_marginals is not None:
                         sentence_pairwise_marginals = pairwise_marginals[delimiter[0]:delimiter[1]]
-                        assert len(sentence_pairwise_marginals) == len(sentence_tokens)
-                        fields['pairwise_marginals'] = ArrayField(sentence_pairwise_marginals)
+                        assert len(sentence_pairwise_marginals) == len(
+                            sentence_tokens)
+                        fields['pairwise_marginals'] = ArrayField(
+                            sentence_pairwise_marginals)
 
                     if vote_mask is not None:
-                        sentence_vote_mask = vote_mask[delimiter[0]:delimiter[1]]
+                        sentence_vote_mask = vote_mask[delimiter[0]
+                            :delimiter[1]]
                         assert len(sentence_vote_mask) == len(sentence_tokens)
                         fields["vote_mask"] = ArrayField(sentence_vote_mask)
 
                     yield Instance(fields)
-

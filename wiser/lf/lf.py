@@ -69,7 +69,8 @@ class DictionaryMatcher(LabelingFunction):
         # Additionally checks lemmas if requested. This will not overwrite
         # existing votes
         if self.match_lemmas:
-            tokens = self._normalize_instance_tokens(instance['tokens'], lemmas=True)
+            tokens = self._normalize_instance_tokens(
+                instance['tokens'], lemmas=True)
             i = 0
             while i < len(tokens):
                 if tokens[i] in self.term_dict:

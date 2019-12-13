@@ -20,16 +20,21 @@ class NCBIDiseaseDatasetReader(DatasetReader):
     the "mention level" corpus available at
     https://www.ncbi.nlm.nih.gov/CBBresearch/Dogan/DISEASE/NCBI_corpus.zip
     """
+
     def __init__(self, token_indexers: Dict[str, TokenIndexer] = None, use_regex: bool = True) -> None:
         super().__init__(lazy=False)
-        self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
+        self.token_indexers = token_indexers or {
+            "tokens": SingleIdTokenIndexer()}
 
         self.nlp = spacy.load('en_core_web_sm')
 
         if use_regex:
-            infix_re = compile_infix_regex(self.nlp.Defaults.infixes + tuple(r'-') + tuple(r'[/+=\(\)\[\]]'))
-            prefix_re = compile_prefix_regex(self.nlp.Defaults.prefixes + tuple(r'[\'\(\[]'))
-            suffix_re = compile_suffix_regex(self.nlp.Defaults.suffixes + tuple(r'[\.\+\)\]]'))
+            infix_re = compile_infix_regex(
+                self.nlp.Defaults.infixes + tuple(r'-') + tuple(r'[/+=\(\)\[\]]'))
+            prefix_re = compile_prefix_regex(
+                self.nlp.Defaults.prefixes + tuple(r'[\'\(\[]'))
+            suffix_re = compile_suffix_regex(
+                self.nlp.Defaults.suffixes + tuple(r'[\.\+\)\]]'))
 
             self.nlp.tokenizer = Tokenizer(
                 self.nlp.vocab,
@@ -43,7 +48,8 @@ class NCBIDiseaseDatasetReader(DatasetReader):
         fields = {"tokens": tokens_field}
 
         if tags:
-            tags_field = SequenceLabelField(labels=tags, sequence_field=tokens_field)
+            tags_field = SequenceLabelField(
+                labels=tags, sequence_field=tokens_field)
             fields["tags"] = tags_field
 
         return Instance(fields)
@@ -76,7 +82,8 @@ class NCBIDiseaseDatasetReader(DatasetReader):
                             # Checks if the next annotation begins somewhere in this token
                             start_entity = next < len(annotations)
                             start_entity = start_entity and token.idx <= annotations[next][0]
-                            start_entity = start_entity and token.idx + len(token.text) > int(annotations[next][0])
+                            start_entity = start_entity and token.idx + \
+                                len(token.text) > int(annotations[next][0])
 
                             if start_entity:
                                 tags.append('I' if current is None else 'B')

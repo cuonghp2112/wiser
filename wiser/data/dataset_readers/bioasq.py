@@ -10,6 +10,7 @@ from xml.etree import ElementTree
 import json
 import pdb
 
+
 @DatasetReader.register('bioasq')
 class BioASQDatasetReader(DatasetReader):
     """
@@ -18,7 +19,8 @@ class BioASQDatasetReader(DatasetReader):
 
     def __init__(self, token_indexers: Dict[str, TokenIndexer] = None) -> None:
         super().__init__(lazy=False)
-        self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
+        self.token_indexers = token_indexers or {
+            "tokens": SingleIdTokenIndexer()}
 
     def text_to_instance(self, doc_id: str, tokens: List[Token], tags: List[str] = None) -> Instance:
         tokens_field = TextField(tokens, self.token_indexers)

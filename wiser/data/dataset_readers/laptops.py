@@ -15,16 +15,19 @@ class LaptopsDatasetReader(DatasetReader):
     DatasetReader for Laptop Reviews corpus available at
     http://alt.qcri.org/semeval2014/task4/.
     """
+
     def __init__(self, token_indexers: Dict[str, TokenIndexer] = None) -> None:
         super().__init__(lazy=False)
-        self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
+        self.token_indexers = token_indexers or {
+            "tokens": SingleIdTokenIndexer()}
 
     def text_to_instance(self, doc_id: str, tokens: List[Token], tags: List[str] = None) -> Instance:
         tokens_field = TextField(tokens, self.token_indexers)
         fields = {"tokens": tokens_field}
 
         if tags:
-            tags_field = SequenceLabelField(labels=tags, sequence_field=tokens_field)
+            tags_field = SequenceLabelField(
+                labels=tags, sequence_field=tokens_field)
             fields["tags"] = tags_field
 
         return Instance(fields)
@@ -56,8 +59,10 @@ class LaptopsDatasetReader(DatasetReader):
             for token in tokens:
                 # Checks if the next annotation begins somewhere in this token
                 start_entity = next < len(annotations)
-                start_entity = start_entity and token.idx <= int(annotations[next].get('from'))
-                start_entity = start_entity and token.idx + len(token.text) > int(annotations[next].get('from'))
+                start_entity = start_entity and token.idx <= int(
+                    annotations[next].get('from'))
+                start_entity = start_entity and token.idx + \
+                    len(token.text) > int(annotations[next].get('from'))
 
                 if start_entity:
                     tags.append('I' if current is None else 'B')
