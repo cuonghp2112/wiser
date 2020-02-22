@@ -64,13 +64,16 @@ class TestWiserConditionalRandomField(unittest.TestCase):
         # Tests that all parameters match
         self.assertLess(torch.norm(crf1.linear - crf2.linear), 1e-3)
         self.assertLess(torch.norm(crf1.transitions - crf2.transitions), 1e-3)
-        self.assertLess(torch.norm(crf1.start_transitions - crf2.start_transitions), 1e-3)
-        self.assertLess(torch.norm(crf1.end_transitions - crf2.end_transitions), 1e-3)
+        self.assertLess(torch.norm(crf1.start_transitions -
+                                   crf2.start_transitions), 1e-3)
+        self.assertLess(torch.norm(
+            crf1.end_transitions - crf2.end_transitions), 1e-3)
 
 
 class LinearCrf(WiserConditionalRandomField):
     """Wraps WiserConditionalRandomField to learn fixed logits for each
     sequence element."""
+
     def __init__(self, num_tags):
         super().__init__(num_tags, None, True)
         self.linear = torch.nn.Parameter(torch.Tensor(num_tags))
@@ -92,7 +95,8 @@ class LinearCrf(WiserConditionalRandomField):
             mask: torch.ByteTensor = None) -> torch.Tensor:
         # pylint: disable=arguments-differ
         return super().expected_log_likelihood(
-            self.linear.repeat(distribution.shape[0], distribution.shape[1], 1),
+            self.linear.repeat(
+                distribution.shape[0], distribution.shape[1], 1),
             mask,
             distribution
         )
@@ -116,7 +120,8 @@ def _train_crf_distribution(crf, distribution, mask, epochs, batch_size):
     optimizer = optim.Adam(crf.parameters())
     for _ in range(epochs):
         for i in range(num_batches):
-            batch_distribution = distribution[i * batch_size:(i + 1) * batch_size]
+            batch_distribution = distribution[i *
+                                              batch_size:(i + 1) * batch_size]
             batch_mask = mask[i * batch_size:(i + 1) * batch_size]
             crf.zero_grad()
             loss = -crf.expected_log_likelihood(batch_distribution, batch_mask)
