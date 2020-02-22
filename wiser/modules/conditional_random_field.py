@@ -41,18 +41,21 @@ class WiserConditionalRandomField(ConditionalRandomField):
         # We compute the partition function before rearranging the inputs
         partition = self._input_likelihood(logits, mask)
         # Transpose batch size and sequence dimensions
-        logits = logits.transpose(0, 1).contiguous()                 # (seq_len, batch_size, num_tags)
+        # (seq_len, batch_size, num_tags)
+        logits = logits.transpose(0, 1).contiguous()
         mask = mask.float().transpose(0, 1).contiguous()             # (seq_len, batch_size)
 
-        unary_marginals = unary_marginals.transpose(0, 1)            # (seq_len, batch_size, num_tags)
+        unary_marginals = unary_marginals.transpose(
+            0, 1)            # (seq_len, batch_size, num_tags)
         unary_marginals = unary_marginals.contiguous()
         if pairwise_marginals is not None:
-            pairwise_marginals = pairwise_marginals.transpose(0, 1)  # (seq_len - 1, batch_size, num_tags, num_tags)
+            # (seq_len - 1, batch_size, num_tags, num_tags)
+            pairwise_marginals = pairwise_marginals.transpose(0, 1)
             pairwise_marginals = pairwise_marginals.contiguous()
         else:
             pairwise_marginals = torch.zeros(
-                                    (seq_len - 1, batch_size, num_tags, num_tags),
-                                    device=logits.device.type)
+                (seq_len - 1, batch_size, num_tags, num_tags),
+                device=logits.device.type)
 
             for i in range(seq_len - 1):
                 for j in range(batch_size):
@@ -64,24 +67,33 @@ class WiserConditionalRandomField(ConditionalRandomField):
         # Start with the transition scores from start_tag to the
         # first tag in each input
         if self.include_start_end_transitions:
-            temp = self.start_transitions.unsqueeze(0)               # (1, num_tags)
-            temp = temp * unary_marginals[0]                         # (batch_size, num_tags)
-            score = temp.sum(dim=1)                                  # (batch_size,)
+            temp = self.start_transitions.unsqueeze(
+                0)               # (1, num_tags)
+            # (batch_size, num_tags)
+            temp = temp * unary_marginals[0]
+            # (batch_size,)
+            score = temp.sum(dim=1)
         else:
-            score = torch.zeros((batch_size,), device=logits.device.type) # (batch_size,)
+            score = torch.zeros(
+                (batch_size,), device=logits.device.type)  # (batch_size,)
 
         # Add up the scores for the expected transitions and all
         # the inputs but the last
         for i in range(seq_len - 1):
             # Adds contributions from logits
-            temp = logits[i] * unary_marginals[i]                    # (batch_size, num_tags)
-            temp = temp.sum(dim=1)                                   # (batch_size,)
+            # (batch_size, num_tags)
+            temp = logits[i] * unary_marginals[i]
+            # (batch_size,)
+            temp = temp.sum(dim=1)
             score += temp * mask[i]
 
             # Adds contributions from transitions from i to i+1
-            temp = self.transitions.unsqueeze(0)                     # (1, num_tags, num_tags)
-            temp = temp * pairwise_marginals[i]                      # (batch_size, num_tags, num_tags)
-            temp = temp.sum(dim=2).sum(dim=1)                        # (batch_size,)
+            # (1, num_tags, num_tags)
+            temp = self.transitions.unsqueeze(0)
+            # (batch_size, num_tags, num_tags)
+            temp = temp * pairwise_marginals[i]
+            # (batch_size,)
+            temp = temp.sum(dim=2).sum(dim=1)
             score += temp * mask[i+1]
 
         # Transition from last state to "stop" state.
@@ -90,18 +102,26 @@ class WiserConditionalRandomField(ConditionalRandomField):
         if self.include_start_end_transitions:
             # To start, we need to find the last token for
             # each instance.
-            index0 = mask.sum(dim=0).long() - 1                      # (batch_size,)
-            index1 = torch.arange(0, batch_size, dtype=torch.long)   # (batch_size,)
-            last_marginals = unary_marginals[index0, index1, :]      # (batch_size, num_tags)
+            # (batch_size,)
+            index0 = mask.sum(dim=0).long() - 1
+            index1 = torch.arange(
+                0, batch_size, dtype=torch.long)   # (batch_size,)
+            # (batch_size, num_tags)
+            last_marginals = unary_marginals[index0, index1, :]
 
-            temp = self.end_transitions.unsqueeze(0)                 # (1, num_tags)
-            temp = temp * last_marginals                             # (batch_size, num_tags)
-            temp = temp.sum(dim=1)                                   # (batch_size,)
+            temp = self.end_transitions.unsqueeze(
+                0)                 # (1, num_tags)
+            # (batch_size, num_tags)
+            temp = temp * last_marginals
+            # (batch_size,)
+            temp = temp.sum(dim=1)
             score += temp
 
         # Adds the last input if it's not masked.
-        last_scores = logits[-1] * unary_marginals[-1]               # (batch_size, num_tags)
-        last_scores = last_scores.sum(dim=1)                         # (batch_size,)
+        # (batch_size, num_tags)
+        last_scores = logits[-1] * unary_marginals[-1]
+        last_scores = last_scores.sum(
+            dim=1)                         # (batch_size,)
         score += last_scores * mask[-1]
 
         # Finally we subtract partition function and return sum
