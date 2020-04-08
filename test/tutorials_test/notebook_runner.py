@@ -81,6 +81,15 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
                 if output.output_type == 'error':
                     errors.append(output)
 
+    onlyfiles = [f for f in os.listdir(
+        workdingdir + "/output/tmp/") if os.isfile(os.join(workdingdir + "/output/tmp/", f))]
+
+    defaultFiles = [f for f in os.listdir(
+        workdingdir + "/output/")]
+
+    print("Listing all files", onlyfiles)
+    print("Listing default files", defaultFiles)
+
     proc = ExecutePreprocessor(timeout=600, kernel_name='python')
     proc.allow_errors = True
     proc.preprocess(
@@ -116,6 +125,7 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
             for output in cell['outputs']:
                 if output.output_type == 'error':
                     errors.append(output)
+
     # change the jsonnet back to original
     # Read in the file
     with open(workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet", 'r') as file:
@@ -128,6 +138,7 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
     # Write the file out again
     with open(workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet", 'w') as file:
         file.write(filedata)
+
     return nb3, errors
 
 
