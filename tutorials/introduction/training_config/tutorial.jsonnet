@@ -21,8 +21,8 @@
     },
   },
   "train_data_path": "output/generative/link_hmm/train_data.p",         // If necessary, change to your own data path
-  "validation_data_path": "output/generative/link_hmm/output/generative/link_hmm/dev_data.p",
-  "test_data_path": "output/generative/link_hmm/output/generative/link_hmm/test_data.p",
+  "validation_data_path": "output/generative/link_hmm/dev_data.p",
+  "test_data_path": "output/generative/link_hmm/test_data.p",
   "evaluate_on_test": true,
   "model": {
     "type": "wiser_crf_tagger",

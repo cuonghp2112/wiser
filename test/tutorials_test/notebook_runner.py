@@ -46,7 +46,20 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
     print(nb2['cells'][3]['source'])
     # replace the jsonnet file with the correct dir.
     nb3['cells'][5]['source'] = nb3['cells'][5]['source'].replace(
-        "training_config/tutorial.jsonnet", workdingdir+"/test/tutorials_test/tutorials_test.jsonnet")
+        "training_config/tutorial.jsonnet", workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet")
+
+    # Read in the file
+    with open(workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet", 'r') as file:
+        filedata = file.read()
+
+    # Replace the target string
+    filedata = filedata.replace("\"num_epochs\": 50", "\"num_epochs\": 1")
+    filedata = filedata.replace(
+        "output/generative/link_hmm/", workdingdir+"/output/generative/link_hmm/")
+    # Write the file out again
+    with open(workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet", 'w') as file:
+        file.write(filedata)
+
     nb3['cells'][5]['source'] = nb3['cells'][5]['source'].replace(
         "output/discriminative/link_hmm", workdingdir + "/output/discriminative/link_hmm")
 
@@ -103,7 +116,18 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
             for output in cell['outputs']:
                 if output.output_type == 'error':
                     errors.append(output)
+    # change the jsonnet back to original
+    # Read in the file
+    with open(workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet", 'r') as file:
+        filedata = file.read()
 
+    # Replace the target string
+    filedata = filedata.replace("\"num_epochs\": 1", "\"num_epochs\": 50")
+    filedata = filedata.replace(
+        workdingdir+"/output/generative/link_hmm/", "output/generative/link_hmm/")
+    # Write the file out again
+    with open(workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet", 'w') as file:
+        file.write(filedata)
     return nb3, errors
 
 
