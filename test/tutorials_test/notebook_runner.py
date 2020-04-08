@@ -35,23 +35,23 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
     nb['cells'][3]['source'] = nb['cells'][3]['source'].replace("750", "10")
     nb['cells'][3]['source'] = nb['cells'][3]['source'].replace("653", "10")
     nb['cells'][-2]['source'] = nb['cells'][-2]['source'].replace(
-        "output/tmp/", workdingdir + "/test/output/tmp/")
+        "output/tmp/", workdingdir + "/output/tmp/")
 
     nb2['cells'][2]['source'] = nb2['cells'][2]['source'].replace(
-        "output/tmp/", workdingdir + "/test/output/tmp/")
+        "output/tmp/", workdingdir + "/output/tmp/")
 
     nb2['cells'][-1]['source'] = nb2['cells'][-1]['source'].replace(
-        "output/generative/link_hmm", workdingdir + "/test/output/generative/link_hmm")
+        "output/generative/link_hmm", workdingdir + "/output/generative/link_hmm")
 
     print(nb2['cells'][3]['source'])
     # replace the jsonnet file with the correct dir.
     nb3['cells'][5]['source'] = nb3['cells'][5]['source'].replace(
         "training_config/tutorial.jsonnet", workdingdir+"/test/tutorials_test/tutorials_test.jsonnet")
     nb3['cells'][5]['source'] = nb3['cells'][5]['source'].replace(
-        "output/discriminative/link_hmm", workdingdir + "/test/output/discriminative/link_hmm")
+        "output/discriminative/link_hmm", workdingdir + "/output/discriminative/link_hmm")
 
     nb3['cells'][-5]['source'] = nb3['cells'][-5]['source'].replace(
-        "output/discriminative/link_hmm", workdingdir + "/test/output/discriminative/link_hmm")
+        "output/discriminative/link_hmm", workdingdir + "/output/discriminative/link_hmm")
     print(nb3['cells'][5]['source'])
 
     proc = ExecutePreprocessor(timeout=600, kernel_name='python')
