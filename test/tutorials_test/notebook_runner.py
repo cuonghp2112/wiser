@@ -37,17 +37,6 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
     nb['cells'][-2]['source'] = nb['cells'][-2]['source'].replace(
         "output/tmp/", workdingdir + "/output/tmp/")
 
-    nb2['cells'][2]['source'] = nb2['cells'][2]['source'].replace(
-        "output/tmp/", workdingdir + "/output/tmp/")
-
-    nb2['cells'][-1]['source'] = nb2['cells'][-1]['source'].replace(
-        "output/generative/link_hmm", workdingdir + "/output/generative/link_hmm")
-
-    print(nb2['cells'][3]['source'])
-    # replace the jsonnet file with the correct dir.
-    nb3['cells'][5]['source'] = nb3['cells'][5]['source'].replace(
-        "training_config/tutorial.jsonnet", workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet")
-
     # Read in the file
     with open(workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet", 'r') as file:
         filedata = file.read()
@@ -59,13 +48,6 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
     # Write the file out again
     with open(workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet", 'w') as file:
         file.write(filedata)
-
-    nb3['cells'][5]['source'] = nb3['cells'][5]['source'].replace(
-        "output/discriminative/link_hmm", workdingdir + "/output/discriminative/link_hmm")
-
-    nb3['cells'][-5]['source'] = nb3['cells'][-5]['source'].replace(
-        "output/discriminative/link_hmm", workdingdir + "/output/discriminative/link_hmm")
-    print(nb3['cells'][5]['source'])
 
     proc = ExecutePreprocessor(timeout=600, kernel_name='python')
     proc.allow_errors = True
@@ -90,6 +72,14 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
     print("Listing all files", onlyfiles)
     print("Listing default files", defaultFiles)
 
+    nb2['cells'][2]['source'] = nb2['cells'][2]['source'].replace(
+        "output/tmp/", workdingdir + "/output/tmp/")
+
+    nb2['cells'][-1]['source'] = nb2['cells'][-1]['source'].replace(
+        "output/generative/link_hmm", workdingdir + "/output/generative/link_hmm")
+
+    print(nb2['cells'][3]['source'])
+
     proc = ExecutePreprocessor(timeout=600, kernel_name='python')
     proc.allow_errors = True
     proc.preprocess(
@@ -98,6 +88,17 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
 
     with open(output_path, mode='wt') as f:
         nbformat.write(nb2, f)
+
+   # replace the jsonnet file with the correct dir.
+    nb3['cells'][5]['source'] = nb3['cells'][5]['source'].replace(
+        "training_config/tutorial.jsonnet", workdingdir + "/tutorials/introduction/training_config/tutorial.jsonnet")
+
+    nb3['cells'][5]['source'] = nb3['cells'][5]['source'].replace(
+        "output/discriminative/link_hmm", workdingdir + "/output/discriminative/link_hmm")
+
+    nb3['cells'][-5]['source'] = nb3['cells'][-5]['source'].replace(
+        "output/discriminative/link_hmm", workdingdir + "/output/discriminative/link_hmm")
+    print(nb3['cells'][5]['source'])
 
     proc = ExecutePreprocessor(timeout=600, kernel_name='python')
     proc.allow_errors = True
