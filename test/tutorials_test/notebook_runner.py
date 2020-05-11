@@ -3,6 +3,7 @@ from nbconvert.preprocessors import ExecutePreprocessor
 import nbformat
 import os
 import nbformat
+import os.path
 from traitlets.config import Config
 
 
@@ -64,7 +65,7 @@ def run_notebook(notebook_path, notebook_path_two, notebook_path_three):
                     errors.append(output)
 
     onlyfiles = [f for f in os.listdir(
-        workdingdir + "/output/tmp/") if os.isfile(os.join(workdingdir + "/output/tmp/", f))]
+        workdingdir + "/output/tmp/") if os.path.isfile(os.path.join(workdingdir + "/output/tmp/", f))]
 
     defaultFiles = [f for f in os.listdir(
         workdingdir + "/output/")]
